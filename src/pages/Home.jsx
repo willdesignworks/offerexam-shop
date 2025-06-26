@@ -26,7 +26,7 @@ function Home() {
   // 排序條件
   const [sortOrder, setSortOrder] = useState({ field: null, order: null });
 
-  // 顯示模式：卡片(card) 或 列表(list)
+  // 顯示模式：卡片/列表
   const [viewMode, setViewMode] = useState("card");
 
   // 分頁狀態
