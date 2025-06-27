@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
 
 // 各個元件導入
@@ -8,10 +9,17 @@ import ProductCard from "../components/ProductCard"; // 商品卡片樣式
 import ProductRow from "../components/ProductRow"; // 商品列表樣式（表格列）
 import Pagination from "../components/Pagination"; // 分頁元件
 
+import Loading from "../components/Loading"; // 讀取元件
+import { setLoading } from "../stores/loading"; // 讀取元件-Redux
+
 function Home() {
   // 原始資料與篩選後資料
   const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
+
+  // 讀取元件
+  const loading = useSelector((state) => state.loading);
+  const dispatch = useDispatch();
 
   // 分類相關
   const [allCategories, setAllCategories] = useState([]); // 所有分類
@@ -31,11 +39,12 @@ function Home() {
 
   // 分頁狀態
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 3; // 每頁顯示數量
 
   // 第一次載入時從 items.json 取得商品資料
   useEffect(() => {
     const fetchItems = async () => {
+      dispatch(setLoading(true)); // 讀取元件-載入
       try {
         const res = await axios.get("/items.json");
         const products = res.data;
@@ -46,10 +55,12 @@ function Home() {
         setAllCategories(categories);
       } catch (error) {
         console.error("載入失敗：", error);
+      } finally {
+        dispatch(setLoading(false)); // 讀取元件-完成
       }
     };
     fetchItems();
-  }, []);
+  }, [dispatch]);
 
   // 當篩選條件導致資料變動時，重設分頁為第一頁
   useEffect(() => {
@@ -67,6 +78,7 @@ function Home() {
 
   // 篩選商品邏輯
   const handleFilter = () => {
+    dispatch(setLoading(true)); // 讀取元件-載入
     let filtered = [...items];
 
     // 關鍵字搜尋
@@ -99,11 +111,15 @@ function Home() {
       filtered = filtered.filter((item) => item.inStock === true);
     }
 
-    setFilteredItems(filtered);
+    setTimeout(() => {
+      setFilteredItems(filtered);
+      dispatch(setLoading(false)); // 讀取元件-完成
+    }, 100); // 讀取元件-延遲
   };
 
   // 排序邏輯（可切換升序或降序）
   const toggleSort = (field) => {
+    dispatch(setLoading(true));
     const isCurrent = sortOrder.field === field;
     const newOrder = isCurrent && sortOrder.order === "asc" ? "desc" : "asc";
     const sorted = [...filteredItems].sort((a, b) =>
@@ -117,6 +133,9 @@ function Home() {
     );
     setSortOrder({ field, order: newOrder });
     setFilteredItems(sorted);
+    setTimeout(() => {
+      dispatch(setLoading(false)); // 讀取元件-完成
+    }, 100); // 讀取元件-延遲
   };
 
   // 分頁邏輯
@@ -125,8 +144,13 @@ function Home() {
   const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
 
+  // 顯示模式
   const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
+    dispatch(setLoading(true));
+    setTimeout(() => {
+      setCurrentPage(pageNumber); // 正確：切換分頁
+      dispatch(setLoading(false));
+    }, 100);
   };
 
   return (
@@ -156,7 +180,9 @@ function Home() {
       />
 
       {/* 商品列表呈現（卡片或列表） */}
-      {filteredItems.length === 0 ? (
+      {loading ? (
+        <Loading />
+      ) : filteredItems.length === 0 ? (
         <div className="text-center alert alert-warning w-100">
           查無符合條件的商品
         </div>

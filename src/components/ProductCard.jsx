@@ -13,7 +13,7 @@ function ProductCard({ item }) {
         </div>
 
         {/* 商品資訊區塊 */}
-        <div className="card-body d-flex flex-column flex-lg-row justify-content-between">
+        <div className="card-body d-flex flex-column align-items-center flex-lg-row justify-content-between">
           <div className="mb-3 mb-lg-0 me-lg-3 flex-grow-1">
             <h6 className="card-title text-truncate fs-5">{item.name}</h6>
             <p className="text-danger fw-bold fs-5">
@@ -21,8 +21,8 @@ function ProductCard({ item }) {
             </p>
           </div>
 
-          <div className="flex-grow-1">
-            <p className="mb-1">
+          <div className="flex-grow-1 fs-5">
+            <p className="mb-2">
               <span className="badge bg-warning text-dark">
                 類別：{item.category}
               </span>
