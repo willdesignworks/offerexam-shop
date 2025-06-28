@@ -60,7 +60,7 @@ function Pagination({ totalPages, currentPage, onPageChange }) {
           </button>
         </li>
 
-        {/*  中間頁碼與省略號（…） */}
+        {/* 省略號 */}
         {pages.map((page, i) =>
           page === "..." ? (
             // 若為省略符號，顯示為 disabled 的 span
