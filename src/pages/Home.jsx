@@ -37,7 +37,25 @@ function Home() {
   const sortOrder = useSelector((state) => state.ui.sortOrder);
   const viewMode = useSelector((state) => state.ui.viewMode);
 
+<<<<<<< HEAD
   const [allCategories, setAllCategories] = useState([]);
+=======
+  // 篩選條件：庫存
+  const [inStockOnly, setInStockOnly] = useState(false);
+
+  // 篩選條件：價格
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [priceFilterFailed, setPriceFilterFailed] = useState(false);
+
+  // 排序條件
+  const [sortOrder, setSortOrder] = useState({ field: null, order: null });
+
+  // 顯示模式：卡片/列表
+  const [viewMode, setViewMode] = useState("card");
+
+  // 分頁狀態
+>>>>>>> aa070b67c1ca32470231b3de0060540eb05bd0b0
   const [currentPage, setCurrentPage] = useState(1);
   const [priceFilterFailed, setPriceFilterFailed] = useState(false);
   const itemsPerPage = 3;
@@ -96,6 +114,9 @@ function Home() {
     if (maxPrice !== "") {
       filtered = filtered.filter((item) => item.price <= parseInt(maxPrice));
     }
+    // 是否有價格範圍篩選失敗
+    const priceFiltered = minPrice !== "" || maxPrice !== "";
+    const isPriceFail = priceFiltered && filtered.length === 0;
 
     // 價格失敗
     const priceFiltered = minPrice !== "" || maxPrice !== "";
@@ -198,11 +219,22 @@ function Home() {
         </table>
       )}
 
+<<<<<<< HEAD
       <Pagination
         totalPages={totalPages}
         currentPage={currentPage}
         onPageChange={handlePageChange}
       />
+=======
+      {/* 分頁區塊 */}
+      {!loading && filteredItems.length > 0 && (
+        <Pagination
+          totalPages={totalPages}
+          currentPage={currentPage}
+          onPageChange={handlePageChange}
+        />
+      )}
+>>>>>>> aa070b67c1ca32470231b3de0060540eb05bd0b0
     </div>
   );
 }
