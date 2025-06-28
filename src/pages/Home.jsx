@@ -2,87 +2,78 @@ import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
 
-// 各個元件導入
-import FilterBar from "../components/FilterBar"; // 篩選條件區塊（包含搜尋欄、類別多選、價格區間、庫存）
-import SortAndViewSwitcher from "../components/SortAndViewSwitcher"; // 排序按鈕與視圖切換按鈕
-import ProductCard from "../components/ProductCard"; // 商品卡片樣式
-import ProductRow from "../components/ProductRow"; // 商品列表樣式（表格列）
-import Pagination from "../components/Pagination"; // 分頁元件
+// Redux slices
+import { setLoading } from "../stores/loadingSlice";
+import { setItems, setFilteredItems } from "../stores/productsSlice";
+import {
+  setCategoryKeyword,
+  toggleCategory,
+  setInStockOnly,
+  setMinPrice,
+  setMaxPrice,
+} from "../stores/filtersSlice";
 
-import Loading from "../components/Loading"; // 讀取元件
-import { setLoading } from "../stores/loading"; // 讀取元件-Redux
+// Components
+import FilterBar from "../components/FilterBar";
+import SortAndViewSwitcher from "../components/SortAndViewSwitcher";
+import ProductCard from "../components/ProductCard";
+import ProductRow from "../components/ProductRow";
+import Pagination from "../components/Pagination";
+import Loading from "../components/Loading";
 
 function Home() {
-  // 原始資料與篩選後資料
-  const [items, setItems] = useState([]);
-  const [filteredItems, setFilteredItems] = useState([]);
-
-  // 讀取元件
-  const loading = useSelector((state) => state.loading);
   const dispatch = useDispatch();
 
-  // 分類相關
-  const [allCategories, setAllCategories] = useState([]); // 所有分類
-  const [selectedCategories, setSelectedCategories] = useState([]); // 使用者勾選的分類
-  const [categoryKeyword, setCategoryKeyword] = useState(""); // 關鍵字搜尋
+  const loading = useSelector((state) => state.loading);
+  const items = useSelector((state) => state.products.items);
+  const filteredItems = useSelector((state) => state.products.filteredItems);
+  const categoryKeyword = useSelector((state) => state.filters.categoryKeyword);
+  const selectedCategories = useSelector(
+    (state) => state.filters.selectedCategories
+  );
+  const inStockOnly = useSelector((state) => state.filters.inStockOnly);
+  const minPrice = useSelector((state) => state.filters.minPrice);
+  const maxPrice = useSelector((state) => state.filters.maxPrice);
+  const sortOrder = useSelector((state) => state.ui.sortOrder);
+  const viewMode = useSelector((state) => state.ui.viewMode);
 
-  // 篩選條件：庫存與價格
-  const [inStockOnly, setInStockOnly] = useState(false);
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-
-  // 排序條件
-  const [sortOrder, setSortOrder] = useState({ field: null, order: null });
-
-  // 顯示模式：卡片/列表
-  const [viewMode, setViewMode] = useState("card");
-
-  // 分頁狀態
+  const [allCategories, setAllCategories] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 3; // 每頁顯示數量
+  const [priceFilterFailed, setPriceFilterFailed] = useState(false);
+  const itemsPerPage = 3;
 
-  // 第一次載入時從 items.json 取得商品資料
+  // 初始載入資料
   useEffect(() => {
     const fetchItems = async () => {
-      dispatch(setLoading(true)); // 讀取元件-載入
+      dispatch(setLoading(true));
       try {
         const res = await axios.get("/items.json");
-        const products = res.data;
-        setItems(products);
-        setFilteredItems(products);
-        // 自動萃取所有分類（用 Set 去除重複）
-        const categories = [...new Set(products.map((item) => item.category))];
+        const data = res.data;
+        dispatch(setItems(data));
+        dispatch(setFilteredItems(data));
+
+        const categories = [...new Set(data.map((item) => item.category))];
         setAllCategories(categories);
-      } catch (error) {
-        console.error("載入失敗：", error);
+      } catch (err) {
+        console.error("載入失敗", err);
       } finally {
-        dispatch(setLoading(false)); // 讀取元件-完成
+        dispatch(setLoading(false));
       }
     };
     fetchItems();
   }, [dispatch]);
 
-  // 當篩選條件導致資料變動時，重設分頁為第一頁
   useEffect(() => {
     setCurrentPage(1);
   }, [filteredItems.length]);
 
-  // 切換分類勾選
-  const handleCategoryChange = (category) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category]
-    );
-  };
-
-  // 篩選商品邏輯
+  // 篩選商品
   const handleFilter = () => {
-    dispatch(setLoading(true)); // 讀取元件-載入
+    dispatch(setLoading(true));
     let filtered = [...items];
 
-    // 關鍵字搜尋
-    if (categoryKeyword.trim() !== "") {
+    // 關鍵字
+    if (categoryKeyword.trim()) {
       const keyword = categoryKeyword.trim().toLowerCase();
       filtered = filtered.filter(
         (item) =>
@@ -91,14 +82,14 @@ function Home() {
       );
     }
 
-    // 分類勾選
+    // 類別
     if (selectedCategories.length > 0) {
       filtered = filtered.filter((item) =>
         selectedCategories.includes(item.category)
       );
     }
 
-    // 價格篩選
+    // 價格
     if (minPrice !== "") {
       filtered = filtered.filter((item) => item.price >= parseInt(minPrice));
     }
@@ -106,85 +97,82 @@ function Home() {
       filtered = filtered.filter((item) => item.price <= parseInt(maxPrice));
     }
 
-    // 僅顯示有庫存
+    // 價格失敗
+    const priceFiltered = minPrice !== "" || maxPrice !== "";
+    const isPriceFail = priceFiltered && filtered.length === 0;
+
+    // 庫存
     if (inStockOnly) {
       filtered = filtered.filter((item) => item.inStock === true);
     }
 
+    // 排序
+    if (sortOrder.field) {
+      filtered.sort((a, b) =>
+        sortOrder.order === "asc"
+          ? a[sortOrder.field]
+              .toString()
+              .localeCompare(b[sortOrder.field].toString(), undefined, {
+                numeric: sortOrder.field === "price",
+              })
+          : b[sortOrder.field]
+              .toString()
+              .localeCompare(a[sortOrder.field].toString(), undefined, {
+                numeric: sortOrder.field === "price",
+              })
+      );
+    }
+
     setTimeout(() => {
-      setFilteredItems(filtered);
-      dispatch(setLoading(false)); // 讀取元件-完成
-    }, 100); // 讀取元件-延遲
+      dispatch(setFilteredItems(filtered));
+      setPriceFilterFailed(isPriceFail);
+      dispatch(setLoading(false));
+    }, 100);
   };
 
-  // 排序邏輯（可切換升序或降序）
-  const toggleSort = (field) => {
-    dispatch(setLoading(true));
-    const isCurrent = sortOrder.field === field;
-    const newOrder = isCurrent && sortOrder.order === "asc" ? "desc" : "asc";
-    const sorted = [...filteredItems].sort((a, b) =>
-      newOrder === "asc"
-        ? a[field].toString().localeCompare(b[field].toString(), undefined, {
-            numeric: field === "price",
-          })
-        : b[field].toString().localeCompare(a[field].toString(), undefined, {
-            numeric: field === "price",
-          })
-    );
-    setSortOrder({ field, order: newOrder });
-    setFilteredItems(sorted);
-    setTimeout(() => {
-      dispatch(setLoading(false)); // 讀取元件-完成
-    }, 100); // 讀取元件-延遲
-  };
-
-  // 分頁邏輯
+  // 分頁
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
 
-  // 顯示模式
-  const handlePageChange = (pageNumber) => {
+  const handlePageChange = (page) => {
     dispatch(setLoading(true));
     setTimeout(() => {
-      setCurrentPage(pageNumber); // 正確：切換分頁
+      setCurrentPage(page);
       dispatch(setLoading(false));
     }, 100);
   };
 
   return (
     <div className="container py-4">
-      {/* 篩選條件區塊 */}
+      {/* 篩選區塊 */}
       <FilterBar
         categoryKeyword={categoryKeyword}
-        setCategoryKeyword={setCategoryKeyword}
+        setCategoryKeyword={(val) => dispatch(setCategoryKeyword(val))}
         allCategories={allCategories}
         selectedCategories={selectedCategories}
-        handleCategoryChange={handleCategoryChange}
+        handleCategoryChange={(cat) => dispatch(toggleCategory(cat))}
         inStockOnly={inStockOnly}
-        setInStockOnly={setInStockOnly}
+        setInStockOnly={(val) => dispatch(setInStockOnly(val))}
         minPrice={minPrice}
-        setMinPrice={setMinPrice}
+        setMinPrice={(val) => dispatch(setMinPrice(val))}
         maxPrice={maxPrice}
-        setMaxPrice={setMaxPrice}
+        setMaxPrice={(val) => dispatch(setMaxPrice(val))}
         handleFilter={handleFilter}
       />
 
       {/* 排序與模式切換 */}
-      <SortAndViewSwitcher
-        sortOrder={sortOrder}
-        toggleSort={toggleSort}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-      />
+      <SortAndViewSwitcher />
 
-      {/* 商品列表呈現（卡片或列表） */}
+      {/* 列表區塊 */}
       {loading ? (
         <Loading />
       ) : filteredItems.length === 0 ? (
         <div className="text-center alert alert-warning w-100">
-          查無符合條件的商品
+          {priceFilterFailed
+            ? "查無符合的價格區間，請重新調整價格範圍"
+            : "查無符合條件的商品"}
         </div>
       ) : viewMode === "card" ? (
         <div className="row g-3">
@@ -210,7 +198,6 @@ function Home() {
         </table>
       )}
 
-      {/* 分頁區塊 */}
       <Pagination
         totalPages={totalPages}
         currentPage={currentPage}

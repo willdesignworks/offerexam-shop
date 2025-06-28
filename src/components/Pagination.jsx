@@ -60,10 +60,10 @@ function Pagination({ totalPages, currentPage, onPageChange }) {
           </button>
         </li>
 
-        {/*  中間頁碼與省略號（…） */}
+        {/* 省略號 */}
         {pages.map((page, i) =>
           page === "..." ? (
-            // 若為省略符號，顯示為 disabled 的 span
+            // 顯示為 disabled
             <li key={`ellipsis-${i}`} className="page-item disabled">
               <span className="page-link">…</span>
             </li>
