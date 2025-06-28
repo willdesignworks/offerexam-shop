@@ -26,10 +26,13 @@ function Home() {
   const [selectedCategories, setSelectedCategories] = useState([]); // 使用者勾選的分類
   const [categoryKeyword, setCategoryKeyword] = useState(""); // 關鍵字搜尋
 
-  // 篩選條件：庫存與價格
+  // 篩選條件：庫存
   const [inStockOnly, setInStockOnly] = useState(false);
+
+  // 篩選條件：價格
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [priceFilterFailed, setPriceFilterFailed] = useState(false);
 
   // 排序條件
   const [sortOrder, setSortOrder] = useState({ field: null, order: null });
@@ -105,6 +108,9 @@ function Home() {
     if (maxPrice !== "") {
       filtered = filtered.filter((item) => item.price <= parseInt(maxPrice));
     }
+    // 是否有價格範圍篩選失敗
+    const priceFiltered = minPrice !== "" || maxPrice !== "";
+    const isPriceFail = priceFiltered && filtered.length === 0;
 
     // 僅顯示有庫存
     if (inStockOnly) {
@@ -113,6 +119,7 @@ function Home() {
 
     setTimeout(() => {
       setFilteredItems(filtered);
+      setPriceFilterFailed(isPriceFail); // 價格失敗
       dispatch(setLoading(false)); // 讀取元件-完成
     }, 100); // 讀取元件-延遲
   };
@@ -184,7 +191,9 @@ function Home() {
         <Loading />
       ) : filteredItems.length === 0 ? (
         <div className="text-center alert alert-warning w-100">
-          查無符合條件的商品
+          {priceFilterFailed
+            ? "查無符合的價格區間，請重新調整價格範圍"
+            : "查無符合條件的商品"}
         </div>
       ) : viewMode === "card" ? (
         <div className="row g-3">
@@ -211,11 +220,13 @@ function Home() {
       )}
 
       {/* 分頁區塊 */}
-      <Pagination
-        totalPages={totalPages}
-        currentPage={currentPage}
-        onPageChange={handlePageChange}
-      />
+      {!loading && filteredItems.length > 0 && (
+        <Pagination
+          totalPages={totalPages}
+          currentPage={currentPage}
+          onPageChange={handlePageChange}
+        />
+      )}
     </div>
   );
 }
