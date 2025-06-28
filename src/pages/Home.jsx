@@ -14,33 +14,35 @@ import {
 } from "../stores/filtersSlice";
 
 // Components
-import FilterBar from "../components/FilterBar";
-import SortAndViewSwitcher from "../components/SortAndViewSwitcher";
-import ProductCard from "../components/ProductCard";
-import ProductRow from "../components/ProductRow";
-import Pagination from "../components/Pagination";
-import Loading from "../components/Loading";
+import FilterBar from "../components/FilterBar"; // 篩選列
+import SortAndViewSwitcher from "../components/SortAndViewSwitcher"; // 排序,顯示模式
+import ProductRow from "../components/ProductRow"; // 條列模式
+import ProductCard from "../components/ProductCard"; // 商品
+import Pagination from "../components/Pagination"; // 分頁
+import Loading from "../components/Loading"; // loading
 
 function Home() {
+  // 狀態
   const dispatch = useDispatch();
 
-  const loading = useSelector((state) => state.loading);
-  const items = useSelector((state) => state.products.items);
-  const filteredItems = useSelector((state) => state.products.filteredItems);
-  const categoryKeyword = useSelector((state) => state.filters.categoryKeyword);
+  const loading = useSelector((state) => state.loading); // loading
+  const items = useSelector((state) => state.products.items); // 商品資料
+  const filteredItems = useSelector((state) => state.products.filteredItems); // 篩選後-商品資料
+  const categoryKeyword = useSelector((state) => state.filters.categoryKeyword); // 關鍵字搜尋
   const selectedCategories = useSelector(
-    (state) => state.filters.selectedCategories
+    (state) => state.filters.selectedCategories // 類別篩選
   );
-  const inStockOnly = useSelector((state) => state.filters.inStockOnly);
-  const minPrice = useSelector((state) => state.filters.minPrice);
+  const minPrice = useSelector((state) => state.filters.minPrice); // 價格篩選
   const maxPrice = useSelector((state) => state.filters.maxPrice);
-  const sortOrder = useSelector((state) => state.ui.sortOrder);
-  const viewMode = useSelector((state) => state.ui.viewMode);
+  const inStockOnly = useSelector((state) => state.filters.inStockOnly); // 庫存篩選
+  const sortOrder = useSelector((state) => state.ui.sortOrder); // 排序條件
+  const viewMode = useSelector((state) => state.ui.viewMode); // 顯示模式 卡片 card 條列 list
 
-  const [allCategories, setAllCategories] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [priceFilterFailed, setPriceFilterFailed] = useState(false);
-  const itemsPerPage = 3;
+  // 畫面呈現
+  const [allCategories, setAllCategories] = useState([]); // 商品類別選單
+  const [currentPage, setCurrentPage] = useState(1); // 當前頁數
+  const [priceFilterFailed, setPriceFilterFailed] = useState(false); // 價格條件錯誤提示
+  const itemsPerPage = 3; // 每頁顯示筆數
 
   // 初始載入資料
   useEffect(() => {
@@ -49,11 +51,11 @@ function Home() {
       try {
         const res = await axios.get("/items.json");
         const data = res.data;
-        dispatch(setItems(data));
+        dispatch(setItems(data)); // 資料存入 store
         dispatch(setFilteredItems(data));
 
         const categories = [...new Set(data.map((item) => item.category))];
-        setAllCategories(categories);
+        setAllCategories(categories); // 儲存類別
       } catch (err) {
         console.error("載入失敗", err);
       } finally {
@@ -63,6 +65,7 @@ function Home() {
     fetchItems();
   }, [dispatch]);
 
+  // 篩選商品，回到第一頁
   useEffect(() => {
     setCurrentPage(1);
   }, [filteredItems.length]);
@@ -72,7 +75,7 @@ function Home() {
     dispatch(setLoading(true));
     let filtered = [...items];
 
-    // 關鍵字
+    // 關鍵字搜尋
     if (categoryKeyword.trim()) {
       const keyword = categoryKeyword.trim().toLowerCase();
       filtered = filtered.filter(
@@ -82,31 +85,30 @@ function Home() {
       );
     }
 
-    // 類別
+    // 類別篩選
     if (selectedCategories.length > 0) {
       filtered = filtered.filter((item) =>
         selectedCategories.includes(item.category)
       );
     }
 
-    // 價格
+    // 價格篩選
     if (minPrice !== "") {
       filtered = filtered.filter((item) => item.price >= parseInt(minPrice));
     }
     if (maxPrice !== "") {
       filtered = filtered.filter((item) => item.price <= parseInt(maxPrice));
     }
-
-    // 價格失敗
+    // 檢查價格條件
     const priceFiltered = minPrice !== "" || maxPrice !== "";
     const isPriceFail = priceFiltered && filtered.length === 0;
 
-    // 庫存
+    // 庫存篩選
     if (inStockOnly) {
       filtered = filtered.filter((item) => item.inStock === true);
     }
 
-    // 排序
+    // 排序條件
     if (sortOrder.field) {
       filtered.sort((a, b) =>
         sortOrder.order === "asc"
@@ -123,6 +125,7 @@ function Home() {
       );
     }
 
+    // 更新篩選結果
     setTimeout(() => {
       dispatch(setFilteredItems(filtered));
       setPriceFilterFailed(isPriceFail);
