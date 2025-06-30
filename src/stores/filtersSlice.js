@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   categoryKeyword: "", // 關鍵字搜尋
-  selectedCategories: [], // 使用者勾選的分類
+  selectedCategories: [], // 勾選的類別
   minPrice: "", // 篩選條件：價格
   maxPrice: "",
   inStockOnly: false, // 篩選條件：庫存
@@ -34,6 +34,7 @@ const filtersSlice = createSlice({
     setInStockOnly(state, action) {
       state.inStockOnly = action.payload;
     },
+    // 重置所有篩選條件
     resetFilters(state) {
       state.categoryKeyword = ""; // 關鍵字搜尋
       state.selectedCategories = []; // 使用者勾選的分類

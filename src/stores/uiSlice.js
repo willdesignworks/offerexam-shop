@@ -1,8 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  viewMode: "card",
-  sortOrder: { field: null, order: null },
+  viewMode: "card", // 預設
+  sortOrder: { field: null, order: null }, // 預設不排序
 };
 
 const uiSlice = createSlice({

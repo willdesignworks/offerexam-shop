@@ -38,7 +38,7 @@ function Home() {
   const sortOrder = useSelector((state) => state.ui.sortOrder); // 排序條件
   const viewMode = useSelector((state) => state.ui.viewMode); // 顯示模式 卡片 card 條列 list
 
-  // 畫面呈現
+  // 畫面呈現,不需跨元件使用
   const [allCategories, setAllCategories] = useState([]); // 商品類別選單
   const [currentPage, setCurrentPage] = useState(1); // 當前頁數
   const [priceFilterFailed, setPriceFilterFailed] = useState(false); // 價格條件錯誤提示
@@ -52,7 +52,7 @@ function Home() {
         const res = await axios.get("/items.json");
         const data = res.data;
         dispatch(setItems(data)); // 資料存入 store
-        dispatch(setFilteredItems(data));
+        dispatch(setFilteredItems(data)); // 篩選完的商品存進 Redux
 
         const categories = [...new Set(data.map((item) => item.category))];
         setAllCategories(categories); // 儲存類別
