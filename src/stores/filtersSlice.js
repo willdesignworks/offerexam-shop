@@ -12,9 +12,11 @@ const filtersSlice = createSlice({
   name: "filters",
   initialState,
   reducers: {
+    // 關鍵字搜尋
     setCategoryKeyword(state, action) {
       state.categoryKeyword = action.payload;
     },
+    // 勾選的類別
     toggleCategory(state, action) {
       const category = action.payload;
       if (state.selectedCategories.includes(category)) {
@@ -25,12 +27,14 @@ const filtersSlice = createSlice({
         state.selectedCategories.push(category);
       }
     },
+    // 篩選條件：價格
     setMinPrice(state, action) {
       state.minPrice = action.payload;
     },
     setMaxPrice(state, action) {
       state.maxPrice = action.payload;
     },
+    // 篩選條件：庫存
     setInStockOnly(state, action) {
       state.inStockOnly = action.payload;
     },
